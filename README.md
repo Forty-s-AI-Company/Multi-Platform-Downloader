@@ -1,35 +1,64 @@
+<div align="center">
+
 # Multi-Platform Downloader
 
-跨平台影音、音訊、字幕下載桌面工具。  
-目前以 `Electron + React + Vite + TypeScript` 製作，核心下載能力以 `yt-dlp` 為主，並針對 `Douyin / Skool` 這類比較麻煩的平台補上專用擷取路線。
+跨平台影音、音訊、字幕下載桌面工具  
+基於 `Electron + React + Vite + TypeScript + yt-dlp + ffmpeg`
+
+<p>
+  <a href="https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Forty-s-AI-Company/Multi-Platform-Downloader?style=for-the-badge&label=version" alt="version" />
+  </a>
+  <img src="https://img.shields.io/badge/platform-Windows-0078D6?style=for-the-badge" alt="platform" />
+  <img src="https://img.shields.io/badge/license-Private-6b7280?style=for-the-badge" alt="license" />
+  <img src="https://img.shields.io/badge/PRs-welcome-22c55e?style=for-the-badge" alt="prs welcome" />
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/Electron-Desktop-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
+  <img src="https://img.shields.io/badge/React-UI-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-Build-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/TypeScript-Code-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/yt--dlp-Downloader-FF0000?style=flat-square" alt="yt-dlp" />
+  <img src="https://img.shields.io/badge/ffmpeg-Transcoding-0ea5e9?style=flat-square" alt="ffmpeg" />
+</p>
+
+<p>
+  <a href="https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases/latest"><strong>下載最新版本</strong></a>
+  ·
+  <a href="https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases">所有 Releases</a>
+</p>
+
+</div>
+
+---
+
+## 專案簡介
+
+`Multi-Platform Downloader` 是一套本機桌面下載工具，目標是把 `yt-dlp` 的能力包裝成更直覺的 GUI 體驗。
+
+目前支援：
+
+- 多平台網址貼上與佇列下載
+- 影片 / 音訊下載
+- 字幕 / 自動字幕 / `srt` 轉換
+- 播放清單下載
+- 區間下載
+- `cookies.txt` 與瀏覽器 cookies
+- Douyin / Skool 專用擷取路線
+- 單筆暫停 / 繼續 / 取消
+- 失敗項目一鍵重跑
+
+---
 
 ## 下載
 
 - 最新版本下載頁：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases/latest>
 - 所有 Release：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
-- Windows 安裝版：到 Release 頁下載 `ai_yd-dlp Setup *.exe`
-- Windows 免安裝版：到 Release 頁下載 `ai_yd-dlp-win-unpacked.zip`
+- Windows 安裝版：`ai_yd-dlp Setup *.exe`
+- Windows 免安裝版：`ai_yd-dlp-win-unpacked.zip`
 
-## 特色
-
-- 支援多平台網址貼上與佇列下載
-- 支援影片 / 音訊模式、清晰度、字幕、自動字幕、SRT 轉換
-- 支援播放清單與區間下載
-- 支援 `cookies.txt` 與瀏覽器 cookies
-- 支援下載列表搜尋、狀態篩選、批次刪除、重跑失敗項目
-- 支援 Douyin 作者頁 / 搜尋頁批次收集
-
-## 目前支援的平台
-
-- YouTube / Shorts / Playlist
-- TikTok
-- Douyin
-- Instagram Reels / 貼文影片
-- Skool
-- 其他 `yt-dlp` 可處理的平台
-
-> 平台規則常常改，這種事比天氣還難預測。  
-> 所以目前架構是「能專用就專用，不能專用就 fallback 到 `yt-dlp`」。
+---
 
 ## 介面截圖
 
@@ -41,6 +70,8 @@
 
 ![下載列表](docs/screenshots/download-list.png)
 
+---
+
 ## 快速開始
 
 ### 方式一：直接使用 Windows 打包版
@@ -50,7 +81,7 @@
 3. 選擇輸出資料夾
 4. 按右上角 `加入下載`
 
-如果你要用安裝版：
+如果你要安裝版：
 
 - `release/ai_yd-dlp Setup 0.0.1.exe`
 
@@ -97,6 +128,8 @@ npm run dist:win
 
 - `release/win-unpacked/ai_yd-dlp.exe`
 - `release/ai_yd-dlp Setup 0.0.1.exe`
+
+---
 
 ## 使用教學
 
@@ -152,20 +185,24 @@ npm run dist:win
 2. 直接按 `重跑失敗項目`
 3. 所有失敗任務會重新排進佇列
 
+---
+
 ## 平台注意事項
 
 ### Douyin
 
-- 程式會先走頁面直讀
-- 抓不到實際媒體時，會改走瀏覽器擷取
-- 仍不行才 fallback 到 `yt-dlp`
-- 內建會攔掉 `bytedance://` 這類外部 deep link
+- 先走頁面直讀
+- 抓不到實際媒體時，改走瀏覽器擷取
+- 仍失敗才 fallback 到 `yt-dlp`
+- 內建會攔掉 `bytedance://` 類 deep link
 
 ### Skool
 
 - 有些內容需要登入
 - 如果直連抓不到，會走瀏覽器擷取串流
 - 建議搭配 cookies 或已登入 session
+
+---
 
 ## 下載列表功能
 
@@ -176,6 +213,22 @@ npm run dist:win
 - 清空列表
 - 詳情展開
 - 右鍵操作：重新下載 / 開啟資料夾 / 複製網址
+
+---
+
+## 技術棧
+
+- Electron
+- React 18
+- Vite
+- TypeScript
+- Node.js
+- `yt-dlp`
+- `ffmpeg`
+- Vitest
+- ESLint
+
+---
 
 ## 專案結構
 
@@ -191,13 +244,15 @@ npm run dist:win
 └─ README.md
 ```
 
+---
+
 ## GitHub 上傳教學
 
-這個專案本機已經可以接到你的 GitHub repo：
+這個專案目前對應的 repo：
 
 - `git@github.com:Forty-s-AI-Company/Multi-Platform-Downloader.git`
 
-### 如果你是第一次推上去
+### 第一次推上去
 
 ```bash
 git add .
@@ -205,7 +260,7 @@ git commit -m "Initial project setup"
 git push -u origin main
 ```
 
-### 如果你之後要更新
+### 後續更新
 
 ```bash
 git add .
@@ -219,6 +274,8 @@ git push
 git remote -v
 ```
 
+---
+
 ## 開發文件
 
 - `AGENTS.md`
@@ -226,6 +283,8 @@ git remote -v
 - `docs/ARCHITECTURE.md`
 - `docs/CLI_MAPPING.md`
 - `docs/PLATFORM_SUPPORT.md`
+
+---
 
 ## License
 
