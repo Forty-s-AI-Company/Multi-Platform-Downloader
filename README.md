@@ -3,6 +3,12 @@
 跨平台影音、音訊、字幕下載桌面工具。  
 目前以 `Electron + React + Vite + TypeScript` 製作，核心下載能力以 `yt-dlp` 為主，並針對 `Douyin / Skool` 這類比較麻煩的平台補上專用擷取路線。
 
+## 下載
+
+- Release 頁面：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
+- Windows 安裝版：到 Release 頁下載 `ai_yd-dlp Setup *.exe`
+- Windows 免安裝版：到 Release 頁下載 `ai_yd-dlp-win-unpacked.zip`
+
 ## 特色
 
 - 支援多平台網址貼上與佇列下載
