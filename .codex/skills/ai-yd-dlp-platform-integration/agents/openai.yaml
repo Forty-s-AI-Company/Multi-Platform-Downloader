@@ -1,0 +1,5 @@
+﻿display_name: ai_yd-dlp Platform Integration
+short_description: cookies / m3u8 / 平台整合流程
+default_prompt: |
+  請協助我在 ai_yd-dlp 裡新增或修復某個平台的支援。優先用 yt-dlp 直接下載；不行就加上 cookies 匯入/從瀏覽器讀取；再不行就用 Playwright 監聽抓 m3u8 後交給 yt-dlp。注意不要在 log 中留下 cookies 或 token。
+

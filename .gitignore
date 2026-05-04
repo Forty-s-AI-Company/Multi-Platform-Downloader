@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+.vite/
+.cache/
+release/
+
+# Local runtime / logs
+*.log
+stdout.txt
+stderr.txt
+builder-debug.yml
+
+# Download outputs / cookies
+download/
+downloads/
+*cookies*.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

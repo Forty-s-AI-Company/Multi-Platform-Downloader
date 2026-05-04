@@ -1,0 +1,22 @@
+{
+  "appId": "com.wuhe.ai-yd-dlp",
+  "productName": "ai_yd-dlp",
+  "files": [
+    "dist/**",
+    "dist-electron/**",
+    "electron/preload.cjs",
+    "package.json"
+  ],
+  "directories": {
+    "output": "release"
+  },
+  "win": {
+    "target": ["nsis"],
+    "icon": "build/icon.ico"
+  },
+  "nsis": {
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico"
+  }
+}

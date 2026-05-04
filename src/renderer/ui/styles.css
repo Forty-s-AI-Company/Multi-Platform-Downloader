@@ -1,0 +1,867 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --bg-grad-a: rgba(37, 99, 235, 0.08);
+  --bg-grad-b: rgba(14, 165, 233, 0.08);
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --surface-soft: #f8fafc;
+  --surface-muted: #eef3f8;
+  --line: #dbe4ee;
+  --line-strong: #c9d5e3;
+  --text: #142235;
+  --text-soft: #64748b;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --success: #16a34a;
+  --success-soft: #ecfdf3;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --header-height: 92px;
+  font-family: "Inter", "Segoe UI", "Microsoft JhengHei UI", "Noto Sans TC", sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --bg-grad-a: rgba(59, 130, 246, 0.14);
+  --bg-grad-b: rgba(14, 165, 233, 0.12);
+  --surface: rgba(15, 23, 42, 0.78);
+  --surface-strong: rgba(15, 23, 42, 0.94);
+  --surface-soft: #111b2e;
+  --surface-muted: #162337;
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(148, 163, 184, 0.24);
+  --text: #e5eef8;
+  --text-soft: #94a3b8;
+  --accent: #60a5fa;
+  --accent-soft: rgba(37, 99, 235, 0.18);
+  --success: #4ade80;
+  --success-soft: rgba(22, 163, 74, 0.16);
+  --danger: #f87171;
+  --danger-soft: rgba(220, 38, 38, 0.16);
+  --shadow: 0 18px 52px rgba(2, 8, 23, 0.38);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+.appShell {
+  display: grid;
+  grid-template-rows: var(--header-height) auto 1fr;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, var(--bg-grad-a), transparent 24%),
+    radial-gradient(circle at top right, var(--bg-grad-b), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 86%, #ffffff 14%) 0%, var(--bg) 100%);
+}
+
+.appHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-strong) 92%, transparent);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.headerGlow {
+  position: absolute;
+  inset: auto auto -40px -10px;
+  width: 220px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.26) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.headerTitleGroup,
+.headerActions {
+  position: relative;
+  z-index: 1;
+}
+
+.headerTitleGroup {
+  min-width: 0;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.headerSubtitle {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.primaryButton,
+.secondaryButton,
+.outlineButton,
+.dangerButton,
+.textButton,
+.iconButton {
+  transition:
+    transform 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.primaryButton,
+.secondaryButton,
+.outlineButton,
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.26);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled),
+.outlineButton:hover:not(:disabled),
+.dangerButton:hover:not(:disabled),
+.iconButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.secondaryButton,
+.outlineButton {
+  border-color: var(--line);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.dangerButton {
+  border-color: color-mix(in srgb, var(--danger) 18%, transparent);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.textButton {
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.outlineButton:disabled,
+.dangerButton:disabled,
+.textButton:disabled,
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.platformTabs {
+  display: flex;
+  gap: 10px;
+  padding: 18px 28px 0;
+  overflow-x: auto;
+}
+
+.platformTab {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.platformTab.isActive {
+  border-color: rgba(37, 99, 235, 0.18);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.appBody {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: 20px;
+  min-height: 0;
+  padding: 18px 28px 28px;
+}
+
+.settingsPanel,
+.downloadPanel {
+  min-height: 0;
+}
+
+.settingsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+}
+
+.panelCard,
+.downloadPanel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.panelCard {
+  padding: 18px;
+}
+
+.noticeCard {
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent-soft) 74%, var(--surface-strong));
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.sectionHeading {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field + .field {
+  margin-top: 14px;
+}
+
+.field label {
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gridFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.inlineInput {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-strong) 92%, transparent);
+  color: var(--text);
+  padding: 12px 14px;
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--text-soft) 90%, transparent);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.urlsTextarea {
+  min-height: 180px;
+}
+
+.urlDropZone {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed transparent;
+  border-radius: 18px;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.urlDropZone.isDragging {
+  border-color: color-mix(in srgb, var(--accent) 44%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 64%, transparent);
+}
+
+.dropHint {
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.formatsTextarea {
+  min-height: 160px;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.advancedFields {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.checkboxLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.checkboxLine input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.compactLine {
+  margin-right: auto;
+}
+
+.cookiesGrid {
+  display: grid;
+  grid-template-columns: 180px 110px 1fr;
+  gap: 10px;
+}
+
+.cookiesGrid input:last-child {
+  grid-column: 1 / -1;
+}
+
+.downloadPanel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.listToolbar {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+}
+
+.toolbarTopRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.statusSummary,
+.listToolbarActions,
+.filterControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.summaryPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.waitingPill {
+  background: var(--surface-muted);
+  color: #475569;
+}
+
+.downloadingPill {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.completedPill {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.failedPill {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.pausedPill {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.searchInput {
+  width: 240px;
+}
+
+.filterSelect {
+  width: 140px;
+}
+
+.jobList {
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+.emptyState {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.jobCard {
+  display: grid;
+  grid-template-columns: 26px 120px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+}
+
+.jobCard + .jobCard {
+  margin-top: 12px;
+}
+
+.jobCard.isSelected {
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 68%, var(--surface-strong));
+}
+
+.jobSelect {
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+}
+
+.jobThumbWrap {
+  width: 120px;
+  height: 76px;
+}
+
+.jobThumbImage,
+.jobThumbFallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+
+.jobThumbImage {
+  object-fit: cover;
+  background: var(--surface-muted);
+}
+
+.jobThumbFallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface-soft)) 0%, var(--surface-strong) 100%);
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.jobMain {
+  min-width: 0;
+}
+
+.jobCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.jobTopActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jobIdentity {
+  min-width: 0;
+}
+
+.jobTitleText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.jobUrlText {
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.statusTag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-queued {
+  background: var(--surface-muted);
+  color: #475569;
+}
+
+.status-running {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.status-paused {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.status-completed {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.status-failed {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.status-canceled {
+  background: color-mix(in srgb, var(--text-soft) 18%, transparent);
+  color: var(--text-soft);
+}
+
+.jobMeta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.routeTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 10px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 88%, transparent);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, #22c55e 100%);
+}
+
+.jobActions {
+  margin-top: 12px;
+}
+
+.jobActionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.jobActionButtons .outlineButton,
+.jobActionButtons .dangerButton {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.jobMenuButton {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-strong);
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.jobMenuButton:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.detailsPanel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.detailsBlock {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: color-mix(in srgb, var(--text) 88%, transparent);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.errorText {
+  margin-top: 10px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.doneText {
+  margin-top: 10px;
+  color: var(--success);
+  font-size: 12px;
+}
+
+.pausedText {
+  margin-top: 10px;
+  color: #b45309;
+  font-size: 12px;
+}
+
+.canceledText {
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.contextMenu {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.contextMenuItem:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+}
+
+@media (max-width: 1180px) {
+  .appBody {
+    grid-template-columns: 1fr;
+  }
+
+  .settingsPanel {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 820px) {
+  .appHeader {
+    height: auto;
+    min-height: var(--header-height);
+    padding: 18px 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions,
+  .toolbarTopRow {
+    justify-content: flex-end;
+  }
+
+  .platformTabs,
+  .appBody {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .jobCard {
+    grid-template-columns: 26px 1fr;
+  }
+
+  .jobThumbWrap {
+    display: none;
+  }
+
+  .cookiesGrid,
+  .gridFields,
+  .filterControls {
+    grid-template-columns: 1fr;
+  }
+
+  .searchInput,
+  .filterSelect {
+    width: 100%;
+  }
+}
