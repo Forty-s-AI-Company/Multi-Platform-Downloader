@@ -5,7 +5,8 @@
 
 ## 下載
 
-- Release 頁面：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
+- 最新版本下載頁：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases/latest>
+- 所有 Release：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
 - Windows 安裝版：到 Release 頁下載 `ai_yd-dlp Setup *.exe`
 - Windows 免安裝版：到 Release 頁下載 `ai_yd-dlp-win-unpacked.zip`
 
