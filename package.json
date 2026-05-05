@@ -17,6 +17,7 @@
     "build:electron": "tsc -p electron/tsconfig.json && node scripts/copy-electron-assets.mjs",
     "pack": "npm run build && electron-builder --dir",
     "dist:win": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dist-win.ps1",
+    "dist:mac": "npm run build && electron-builder --mac dmg --publish never",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"

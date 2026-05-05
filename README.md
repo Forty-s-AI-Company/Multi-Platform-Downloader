@@ -57,6 +57,7 @@
 - 所有 Release：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
 - Windows 安裝版：`ai_yt-dlp Setup *.exe`
 - Windows 免安裝版：`ai_yt-dlp-win-unpacked.zip`
+- macOS 安裝版：`ai_yt-dlp-*.dmg`
 
 ---
 
@@ -128,6 +129,16 @@ npm run dist:win
 
 - `release/win-unpacked/ai_yt-dlp.exe`
 - `release/ai_yt-dlp Setup 0.0.1.exe`
+
+#### 6. 打包 macOS DMG
+
+如果你人在 macOS 本機：
+
+```bash
+npm run dist:mac
+```
+
+如果你現在是在 Windows 開發，專案也已經內建 GitHub Actions workflow，會用 macOS runner 產出 `.dmg` 並上傳到 Release。
 
 ---
 
