@@ -1,6 +1,6 @@
 ﻿---
-name: ai-yd-dlp-platform-integration
-description: ai_yd-dlp 平台整合技能：針對需要登入/cookies 或需抓 m3u8 的平台（如 Skool）提供可重用的整合流程與注意事項。
+name: ai-yt-dlp-platform-integration
+description: ai_yt-dlp 平台整合技能：針對需要登入/cookies 或需抓 m3u8 的平台（如 Skool）提供可重用的整合流程與注意事項。
 ---
 
 # Platform Integration Skill

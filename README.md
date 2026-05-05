@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # Multi-Platform Downloader
 
@@ -55,8 +55,8 @@
 
 - 最新版本下載頁：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases/latest>
 - 所有 Release：<https://github.com/Forty-s-AI-Company/Multi-Platform-Downloader/releases>
-- Windows 安裝版：`ai_yd-dlp Setup *.exe`
-- Windows 免安裝版：`ai_yd-dlp-win-unpacked.zip`
+- Windows 安裝版：`ai_yt-dlp Setup *.exe`
+- Windows 免安裝版：`ai_yt-dlp-win-unpacked.zip`
 
 ---
 
@@ -76,14 +76,14 @@
 
 ### 方式一：直接使用 Windows 打包版
 
-1. 開啟 `release/win-unpacked/ai_yd-dlp.exe`
+1. 開啟 `release/win-unpacked/ai_yt-dlp.exe`
 2. 貼上網址
 3. 選擇輸出資料夾
 4. 按右上角 `加入下載`
 
 如果你要安裝版：
 
-- `release/ai_yd-dlp Setup 0.0.1.exe`
+- `release/ai_yt-dlp Setup 0.0.1.exe`
 
 ### 方式二：從原始碼開發
 
@@ -126,8 +126,8 @@ npm run dist:win
 
 打包完成後會在：
 
-- `release/win-unpacked/ai_yd-dlp.exe`
-- `release/ai_yd-dlp Setup 0.0.1.exe`
+- `release/win-unpacked/ai_yt-dlp.exe`
+- `release/ai_yt-dlp Setup 0.0.1.exe`
 
 ---
 
@@ -283,6 +283,7 @@ git remote -v
 - `docs/ARCHITECTURE.md`
 - `docs/CLI_MAPPING.md`
 - `docs/PLATFORM_SUPPORT.md`
+- `docs/TIKTOK_DOUYIN_CLEAN_ROOM_PLAN.md`
 
 ---
 

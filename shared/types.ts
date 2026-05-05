@@ -3,6 +3,12 @@ export type DownloadMode = "video" | "audio";
 export type VideoQuality = "best" | "1080p" | "720p" | "480p";
 export type AudioQuality = "best" | "normal";
 
+export type CollectedVideoEntry = {
+  url: string;
+  title?: string | null;
+  thumbnail?: string | null;
+};
+
 export type DownloadJobRequest = {
   url: string;
   outputDir: string | null;

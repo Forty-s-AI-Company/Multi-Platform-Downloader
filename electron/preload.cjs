@@ -5,7 +5,8 @@ const { clipboard, contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("api", {
   pickFolder: () => ipcRenderer.invoke("dialog:pickFolder"),
   listFormats: (url) => ipcRenderer.invoke("ytDlp:listFormats", url),
-  collectDouyinUrls: (params) => ipcRenderer.invoke("douyin:collectUrls", params),
+  collectDouyinEntries: (params) => ipcRenderer.invoke("douyin:collectUrls", params),
+  collectTikTokEntries: (params) => ipcRenderer.invoke("tiktok:collectUrls", params),
   startJob: (req) => ipcRenderer.invoke("jobs:start", req),
   getJobsState: () => ipcRenderer.invoke("jobs:getState"),
   getQueueState: () => ipcRenderer.invoke("jobs:getQueueState"),

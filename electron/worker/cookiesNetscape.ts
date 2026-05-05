@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -44,7 +44,7 @@ export function normalizeNetscapeCookiesIfNeeded(cookiesPath: string): Normalize
 
   if (!looksLikeNetscape || !changed) return { path: cookiesPath, changed: false };
 
-  const tmpDir = path.join(os.tmpdir(), "ai_yd_dlp");
+  const tmpDir = path.join(os.tmpdir(), "ai_yt_dlp");
   fs.mkdirSync(tmpDir, { recursive: true });
 
   const hash = crypto.createHash("sha1").update(text).digest("hex").slice(0, 10);
@@ -101,4 +101,3 @@ export function parseNetscapeCookiesFile(cookiesPath: string): CookiesSetDetails
 
   return out;
 }
-

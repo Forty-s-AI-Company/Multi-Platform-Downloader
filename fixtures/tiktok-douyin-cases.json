@@ -1,0 +1,44 @@
+[
+  {
+    "platform": "douyin",
+    "kind": "video",
+    "url": "https://www.douyin.com/video/7553758340040379648",
+    "shouldCollectBatch": false
+  },
+  {
+    "platform": "douyin",
+    "kind": "user",
+    "url": "https://www.douyin.com/user/MS4wLjABAAAAqLxlxvTwV7ureYQueWERJJN-WtAp1FbDqQdnwQir1O_VHnu7HCTMdlH-lcmxqrSb?showSubTab=video",
+    "shouldCollectBatch": true
+  },
+  {
+    "platform": "douyin",
+    "kind": "search",
+    "url": "https://www.douyin.com/search/7star?modal_id=7634386073199725830",
+    "shouldCollectBatch": true
+  },
+  {
+    "platform": "tiktok",
+    "kind": "video",
+    "url": "https://www.tiktok.com/@sample/video/7345678901234567890",
+    "shouldCollectBatch": false
+  },
+  {
+    "platform": "tiktok",
+    "kind": "user",
+    "url": "https://www.tiktok.com/@sample_creator",
+    "shouldCollectBatch": true
+  },
+  {
+    "platform": "tiktok",
+    "kind": "search",
+    "url": "https://www.tiktok.com/search?q=cat%20video",
+    "shouldCollectBatch": true
+  },
+  {
+    "platform": "tiktok",
+    "kind": "shortlink",
+    "url": "https://vm.tiktok.com/ZSYabcd12/",
+    "shouldCollectBatch": false
+  }
+]

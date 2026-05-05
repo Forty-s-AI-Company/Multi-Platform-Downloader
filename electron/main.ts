@@ -5,8 +5,9 @@ import type { DownloadJobRequest, JobEvent } from "../shared/types.js";
 import { normalizeInputUrl } from "../shared/url.js";
 import { JobsStore, type StoredJob } from "./store/jobsStore.js";
 import { normalizeNetscapeCookiesIfNeeded, parseNetscapeCookiesFile } from "./worker/cookiesNetscape.js";
-import { collectDouyinVideoUrls } from "./worker/douyinCapture.js";
+import { collectDouyinVideoEntries } from "./worker/douyinCapture.js";
 import { resolveDouyinUrl } from "./worker/douyin.js";
+import { collectTikTokVideoEntries } from "./worker/tiktokCapture.js";
 import { startDownloadJob } from "./worker/jobRunner.js";
 import { detectPlatformFromUrl } from "./worker/platform.js";
 import { YtDlpAbortedError, listFormats } from "./worker/ytDlp.js";
@@ -190,12 +191,36 @@ app.whenReady().then(() => {
         ? parseNetscapeCookiesFile(normalizedCookiesFile)
         : [];
 
-      return await collectDouyinVideoUrls({
+      return await collectDouyinVideoEntries({
         url: params.url,
         cookies,
         onLog: (line) => {
           win.webContents.send("jobs:event", {
             jobId: "douyin-collector",
+            type: "job.log",
+            data: { line }
+          } satisfies JobEvent);
+        }
+      });
+    }
+  );
+
+  ipcMain.handle(
+    "tiktok:collectUrls",
+    async (_event, params: { url: string; cookiesFile: string | null }) => {
+      const normalizedCookiesFile = params.cookiesFile
+        ? normalizeNetscapeCookiesIfNeeded(params.cookiesFile).path
+        : null;
+      const cookies = normalizedCookiesFile
+        ? parseNetscapeCookiesFile(normalizedCookiesFile)
+        : [];
+
+      return await collectTikTokVideoEntries({
+        url: params.url,
+        cookies,
+        onLog: (line) => {
+          win.webContents.send("jobs:event", {
+            jobId: "tiktok-collector",
             type: "job.log",
             data: { line }
           } satisfies JobEvent);

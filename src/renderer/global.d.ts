@@ -1,11 +1,18 @@
-import type { DownloadJobRequest, JobEvent } from "../../shared/types";
+import type { CollectedVideoEntry, DownloadJobRequest, JobEvent } from "../../shared/types";
 
 declare global {
   interface Window {
     api: {
       pickFolder: () => Promise<string | null>;
       listFormats: (url: string) => Promise<string>;
-      collectDouyinUrls: (params: { url: string; cookiesFile: string | null }) => Promise<string[]>;
+      collectDouyinEntries: (params: {
+        url: string;
+        cookiesFile: string | null;
+      }) => Promise<CollectedVideoEntry[]>;
+      collectTikTokEntries: (params: {
+        url: string;
+        cookiesFile: string | null;
+      }) => Promise<CollectedVideoEntry[]>;
       startJob: (req: DownloadJobRequest) => Promise<{ jobId: string }>;
       getJobsState: () => Promise<
         Array<{

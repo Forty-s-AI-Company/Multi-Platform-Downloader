@@ -1,6 +1,6 @@
 {
-  "appId": "com.wuhe.ai-yd-dlp",
-  "productName": "ai_yd-dlp",
+  "appId": "com.wuhe.ai-yt-dlp",
+  "productName": "ai_yt-dlp",
   "files": [
     "dist/**",
     "dist-electron/**",

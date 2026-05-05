@@ -3,15 +3,15 @@ import type { CookiesSetDetails, Session } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { extractTikTokVideoUrlsFromCandidates } from "../../shared/platformCollection.js";
 import type { CollectedVideoEntry } from "../../shared/types.js";
-import { isUsableDouyinMediaUrl } from "./douyinUrlGuards.js";
 import { normalizeWebTitle } from "./sanitize.js";
 
-const douyinPartition = "persist:douyin";
-const collectorDoneFlag = "__AI_YD_DLP_DOUYIN_COLLECT_DONE__";
+const tiktokPartition = "persist:tiktok";
+const collectorDoneFlag = "__AI_YD_DLP_TIKTOK_COLLECT_DONE__";
 
-let douyinSession: Session | null = null;
-let douyinWindow: BrowserWindow | null = null;
+let tiktokSession: Session | null = null;
+let tiktokWindow: BrowserWindow | null = null;
 let requestHandlerInstalled = false;
 
 type CaptureState = {
@@ -23,16 +23,16 @@ let captureState: CaptureState | null = null;
 const protectedWindows = new WeakSet<BrowserWindow>();
 const windowLoggers = new WeakMap<BrowserWindow, (line: string) => void>();
 
-export async function extractDouyinPageMedia(params: {
+export async function extractTikTokPageMedia(params: {
   url: string;
   cookies: CookiesSetDetails[];
   onLog: (line: string) => void;
   timeoutMs?: number;
 }): Promise<{ mediaUrl: string; pageTitle: string | null; thumbnailUrl: string | null } | null> {
   const { url, cookies, onLog } = params;
-  const timeoutMs = params.timeoutMs ?? 18_000;
+  const timeoutMs = params.timeoutMs ?? 15_000;
 
-  const ses = await getDouyinSession();
+  const ses = await getTikTokSession();
   await ensureRequestHandlerInstalled();
   await applyCookies(ses, cookies, onLog);
 
@@ -46,26 +46,22 @@ export async function extractDouyinPageMedia(params: {
       nodeIntegration: false
     }
   });
-  protectDouyinWindow(win, onLog);
+  protectTikTokWindow(win, onLog);
 
   try {
     await win.loadURL(url);
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
-      const extracted = await readDouyinPageMedia(win);
+      const extracted = await readTikTokPageMedia(win);
       if (extracted?.mediaUrl) {
-        onLog("[douyin] 已從頁面直接解析到媒體位址。");
-        return {
-          mediaUrl: extracted.mediaUrl,
-          pageTitle: extracted.pageTitle,
-          thumbnailUrl: extracted.thumbnailUrl
-        };
+        onLog("[tiktok] 已從頁面直接解析到媒體位址。");
+        return extracted;
       }
       await sleep(700);
     }
 
-    onLog("[douyin] 頁面直接解析未取得媒體位址，改走瀏覽器 request 擷取。");
+    onLog("[tiktok] 頁面直接解析未取得媒體位址，改走瀏覽器 request 擷取。");
     return null;
   } finally {
     if (!win.isDestroyed()) {
@@ -74,40 +70,7 @@ export async function extractDouyinPageMedia(params: {
   }
 }
 
-async function getDouyinSession(): Promise<Session> {
-  if (!app.isReady()) {
-    await app.whenReady();
-  }
-
-  if (!douyinSession) {
-    douyinSession = session.fromPartition(douyinPartition, { cache: true });
-  }
-
-  return douyinSession;
-}
-
-async function ensureRequestHandlerInstalled() {
-  if (requestHandlerInstalled) return;
-
-  const ses = await getDouyinSession();
-  requestHandlerInstalled = true;
-
-  ses.webRequest.onBeforeRequest({ urls: ["*://*/*"] }, (details, callback) => {
-    try {
-      if (captureState && !captureState.foundUrl) {
-        const mediaUrl = extractDouyinMediaUrl(details.url);
-        if (mediaUrl) {
-          captureState.foundUrl = mediaUrl;
-          captureState.onLog(`[douyin] 偵測到媒體請求：${maskQuery(mediaUrl)}`);
-        }
-      }
-    } finally {
-      callback({ cancel: false });
-    }
-  });
-}
-
-export async function captureDouyinMedia(params: {
+export async function captureTikTokMedia(params: {
   jobId: string;
   url: string;
   cookies: CookiesSetDetails[];
@@ -115,22 +78,22 @@ export async function captureDouyinMedia(params: {
   timeoutMs?: number;
 }): Promise<{ mediaUrl: string; pageTitle: string | null; thumbnailUrl: string | null }> {
   const { jobId, url, cookies, onLog } = params;
-  const timeoutMs = params.timeoutMs ?? 45_000;
+  const timeoutMs = params.timeoutMs ?? 35_000;
 
-  const ses = await getDouyinSession();
+  const ses = await getTikTokSession();
   await ensureRequestHandlerInstalled();
   await applyCookies(ses, cookies, onLog);
 
   captureState = { foundUrl: null, onLog };
 
-  const win = await ensureDouyinWindow({
-    title: "Douyin 單支擷取",
+  const win = await ensureTikTokWindow({
+    title: "TikTok 擷取模式",
     width: 1100,
     height: 760,
     onLog
   });
 
-  onLog("[douyin] 已打開作品頁，請按播放讓頁面送出影片請求。");
+  onLog("[tiktok] 已打開 TikTok 頁面，請確認影片有真的開始播放。");
   await win.loadURL(url);
 
   const startedAt = Date.now();
@@ -144,7 +107,7 @@ export async function captureDouyinMedia(params: {
 
     if (elapsed - lastPingAt >= 5000) {
       lastPingAt = elapsed;
-      onLog("[douyin] 等待影片請求中，請確認你已按播放，畫面有真的開始跑。");
+      onLog("[tiktok] 等待影片請求中，請確認畫面已經開始播放。");
     }
 
     await sleep(500);
@@ -156,11 +119,11 @@ export async function captureDouyinMedia(params: {
   if (!foundUrl) {
     throw new Error(
       [
-        "Douyin 專用擷取逾時，還沒抓到實際影片網址。",
-        "請確認：",
-        "1) 影片有真的開始播放。",
-        "2) 如果頁面需要登入，session 裡已有可用 cookies。",
-        "3) 如果這支仍抓不到，系統會改走 yt-dlp fallback。"
+        "TikTok 瀏覽器擷取逾時。",
+        "請先確認：",
+        "1) 影片頁面已完整載入，且畫面有真的開始播放。",
+        "2) 若頁面需要登入，請改用 cookies.txt 或瀏覽器 cookies。",
+        "3) 若仍失敗，才會交給 yt-dlp fallback。"
       ].join("\n")
     );
   }
@@ -168,11 +131,11 @@ export async function captureDouyinMedia(params: {
   return {
     mediaUrl: foundUrl,
     pageTitle: safeGetTitle(win),
-    thumbnailUrl: await captureDouyinThumbnail(win, jobId, onLog)
+    thumbnailUrl: await captureTikTokThumbnail(win, jobId, onLog)
   };
 }
 
-export async function collectDouyinVideoUrls(params: {
+export async function collectTikTokVideoUrls(params: {
   url: string;
   cookies: CookiesSetDetails[];
   onLog?: (line: string) => void;
@@ -180,12 +143,12 @@ export async function collectDouyinVideoUrls(params: {
   const { url, cookies } = params;
   const onLog = params.onLog ?? (() => {});
 
-  const ses = await getDouyinSession();
+  const ses = await getTikTokSession();
   await ensureRequestHandlerInstalled();
   await applyCookies(ses, cookies, onLog);
 
-  const win = await ensureDouyinWindow({
-    title: "Douyin 批次收集",
+  const win = await ensureTikTokWindow({
+    title: "TikTok 批次收集",
     width: 1180,
     height: 820,
     onLog
@@ -201,14 +164,14 @@ export async function collectDouyinVideoUrls(params: {
   win.once("closed", handleClosed);
 
   try {
-    onLog("[douyin] 已打開抖音頁面，請往下滑到你要的作品數量。");
-    onLog("[douyin] 滑夠後按右下角「完成收集並開始下載」。");
+    onLog("[tiktok] 已打開 TikTok 頁面，請往下滑到你要的作品數量。");
+    onLog("[tiktok] 滑夠後按右下角「完成收集並開始下載」。");
 
     await win.loadURL(url);
     await injectCollectorOverlay(win);
 
     while (!closed) {
-      const urlsOnPage = await readDouyinUrlsFromPage(win);
+      const urlsOnPage = await readTikTokUrlsFromPage(win);
       for (const entry of urlsOnPage) {
         foundUrls.add(entry);
       }
@@ -216,7 +179,7 @@ export async function collectDouyinVideoUrls(params: {
       await updateCollectorOverlay(win, foundUrls.size);
 
       if (await readCollectorDone(win)) {
-        onLog(`[douyin] 已完成收集，共 ${foundUrls.size} 筆作品網址。`);
+        onLog(`[tiktok] 已完成收集，共 ${foundUrls.size} 筆作品網址。`);
         break;
       }
 
@@ -232,7 +195,7 @@ export async function collectDouyinVideoUrls(params: {
   return [...foundUrls];
 }
 
-export async function collectDouyinVideoEntries(params: {
+export async function collectTikTokVideoEntries(params: {
   url: string;
   cookies: CookiesSetDetails[];
   onLog?: (line: string) => void;
@@ -240,12 +203,12 @@ export async function collectDouyinVideoEntries(params: {
   const { url, cookies } = params;
   const onLog = params.onLog ?? (() => {});
 
-  const ses = await getDouyinSession();
+  const ses = await getTikTokSession();
   await ensureRequestHandlerInstalled();
   await applyCookies(ses, cookies, onLog);
 
-  const win = await ensureDouyinWindow({
-    title: "Douyin 批次收集",
+  const win = await ensureTikTokWindow({
+    title: "TikTok 批次收集",
     width: 1180,
     height: 820,
     onLog
@@ -261,14 +224,14 @@ export async function collectDouyinVideoEntries(params: {
   win.once("closed", handleClosed);
 
   try {
-    onLog("[douyin] 已打開抖音頁面，請往下滑到你要的作品數量。");
-    onLog("[douyin] 滑夠後按右下角「完成收集並開始下載」。");
+    onLog("[tiktok] 已打開 TikTok 頁面，請往下滑到你要的作品數量。");
+    onLog("[tiktok] 滑夠後按右下角「完成收集並開始下載」。");
 
     await win.loadURL(url);
     await injectCollectorOverlay(win);
 
     while (!closed) {
-      const entriesOnPage = await readDouyinEntriesFromPage(win);
+      const entriesOnPage = await readTikTokEntriesFromPage(win);
       for (const entry of entriesOnPage) {
         const previous = foundEntries.get(entry.url);
         foundEntries.set(entry.url, {
@@ -281,7 +244,7 @@ export async function collectDouyinVideoEntries(params: {
       await updateCollectorOverlay(win, foundEntries.size);
 
       if (await readCollectorDone(win)) {
-        onLog(`[douyin] 已完成收集，共 ${foundEntries.size} 筆作品網址。`);
+        onLog(`[tiktok] 已完成收集，共 ${foundEntries.size} 筆作品網址。`);
         break;
       }
 
@@ -297,6 +260,39 @@ export async function collectDouyinVideoEntries(params: {
   return [...foundEntries.values()];
 }
 
+async function getTikTokSession(): Promise<Session> {
+  if (!app.isReady()) {
+    await app.whenReady();
+  }
+
+  if (!tiktokSession) {
+    tiktokSession = session.fromPartition(tiktokPartition, { cache: true });
+  }
+
+  return tiktokSession;
+}
+
+async function ensureRequestHandlerInstalled() {
+  if (requestHandlerInstalled) return;
+
+  const ses = await getTikTokSession();
+  requestHandlerInstalled = true;
+
+  ses.webRequest.onBeforeRequest({ urls: ["*://*/*"] }, (details, callback) => {
+    try {
+      if (captureState && !captureState.foundUrl) {
+        const mediaUrl = extractTikTokMediaUrl(details.url);
+        if (mediaUrl) {
+          captureState.foundUrl = mediaUrl;
+          captureState.onLog(`[tiktok] 偵測到媒體請求：${maskQuery(mediaUrl)}`);
+        }
+      }
+    } finally {
+      callback({ cancel: false });
+    }
+  });
+}
+
 async function applyCookies(
   ses: Session,
   cookies: CookiesSetDetails[],
@@ -304,27 +300,27 @@ async function applyCookies(
 ) {
   if (cookies.length === 0) return;
 
-  onLog(`[douyin] 已套用 cookies：${cookies.length} 筆`);
+  onLog(`[tiktok] 已套用 cookies：${cookies.length} 筆`);
   for (const cookie of cookies) {
     try {
       await ses.cookies.set(cookie);
     } catch (error) {
-      onLog(`[douyin] cookies.set 失敗：${error instanceof Error ? error.message : String(error)}`);
+      onLog(`[tiktok] cookies.set 失敗：${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
 
-async function ensureDouyinWindow(options: {
+async function ensureTikTokWindow(options: {
   title: string;
   width: number;
   height: number;
   onLog?: (line: string) => void;
 }): Promise<BrowserWindow> {
-  const ses = await getDouyinSession();
+  const ses = await getTikTokSession();
 
   const win =
-    douyinWindow && !douyinWindow.isDestroyed()
-      ? douyinWindow
+    tiktokWindow && !tiktokWindow.isDestroyed()
+      ? tiktokWindow
       : new BrowserWindow({
           width: options.width,
           height: options.height,
@@ -337,8 +333,8 @@ async function ensureDouyinWindow(options: {
           }
         });
 
-  douyinWindow = win;
-  protectDouyinWindow(win, options.onLog);
+  tiktokWindow = win;
+  protectTikTokWindow(win, options.onLog);
   win.setTitle(options.title);
   win.setMenuBarVisibility(false);
   win.show();
@@ -347,7 +343,7 @@ async function ensureDouyinWindow(options: {
   return win;
 }
 
-function protectDouyinWindow(win: BrowserWindow, onLog?: (line: string) => void) {
+function protectTikTokWindow(win: BrowserWindow, onLog?: (line: string) => void) {
   if (onLog) {
     windowLoggers.set(win, onLog);
   }
@@ -356,12 +352,12 @@ function protectDouyinWindow(win: BrowserWindow, onLog?: (line: string) => void)
   protectedWindows.add(win);
 
   const blockIfNeeded = (targetUrl: string): boolean => {
-    if (isAllowedDouyinNavigation(targetUrl)) {
+    if (isAllowedNavigation(targetUrl)) {
       return false;
     }
 
     const logger = windowLoggers.get(win);
-    logger?.(`[douyin] 已攔截外部協定跳轉：${maskDangerousUrl(targetUrl)}`);
+    logger?.(`[tiktok] 已攔截外部協定跳轉：${maskDangerousUrl(targetUrl)}`);
     return true;
   };
 
@@ -415,9 +411,8 @@ async function injectCollectorOverlay(win: BrowserWindow) {
     await win.webContents.executeJavaScript(
       `(() => {
         const FLAG_KEY = ${JSON.stringify(collectorDoneFlag)};
-        const ROOT_ID = "ai-yt-dlp-douyin-collector";
+        const ROOT_ID = "ai-yt-dlp-tiktok-collector";
         const BADGE_ID = ROOT_ID + "-count";
-        const BUTTON_ID = ROOT_ID + "-button";
 
         const mount = () => {
           let root = document.getElementById(ROOT_ID);
@@ -445,21 +440,20 @@ async function injectCollectorOverlay(win: BrowserWindow) {
             badge.style.boxShadow = "0 6px 18px rgba(0,0,0,0.28)";
 
             const button = document.createElement("button");
-            button.id = BUTTON_ID;
             button.type = "button";
             button.textContent = "完成收集並開始下載";
             button.style.padding = "12px 18px";
             button.style.border = "none";
             button.style.borderRadius = "12px";
             button.style.cursor = "pointer";
-            button.style.background = "#1677ff";
+            button.style.background = "#fe2c55";
             button.style.color = "#fff";
             button.style.fontSize = "14px";
             button.style.fontWeight = "700";
-            button.style.boxShadow = "0 10px 24px rgba(22,119,255,0.35)";
+            button.style.boxShadow = "0 10px 24px rgba(254,44,85,0.35)";
             button.addEventListener("click", () => {
               window[FLAG_KEY] = true;
-              button.textContent = "已完成收集，準備返回程式...";
+              button.textContent = "正在整理收集結果...";
               button.disabled = true;
               button.style.opacity = "0.88";
             });
@@ -481,7 +475,7 @@ async function injectCollectorOverlay(win: BrowserWindow) {
       true
     );
   } catch {
-    // 頁面如果剛好在跳轉，下一輪更新時會再補一次。
+    // 頁面還在跳轉時覆蓋層可能暫時注入不到，下一輪會再補一次。
   }
 }
 
@@ -491,20 +485,20 @@ async function updateCollectorOverlay(win: BrowserWindow, count: number) {
   try {
     await win.webContents.executeJavaScript(
       `(() => {
-        const badge = document.getElementById("ai-yt-dlp-douyin-collector-count");
+        const badge = document.getElementById("ai-yt-dlp-tiktok-collector-count");
         if (badge) {
-          badge.textContent = ${JSON.stringify(`已收集 ${count} 筆`)};
+          badge.textContent = "已收集 ${count} 筆";
         }
       })()`,
       true
     );
   } catch {
-    // 忽略短暫導頁造成的例外。
+    // 頁面重新渲染時會短暫找不到 badge，下一輪更新即可。
   }
 }
 
 async function readCollectorDone(win: BrowserWindow): Promise<boolean> {
-  if (win.isDestroyed()) return false;
+  if (win.isDestroyed()) return true;
 
   try {
     const result = await win.webContents.executeJavaScript(
@@ -517,40 +511,20 @@ async function readCollectorDone(win: BrowserWindow): Promise<boolean> {
   }
 }
 
-function safeGetTitle(win: BrowserWindow): string | null {
-  try {
-    const title = win.webContents.getTitle();
-    return title?.trim() ? normalizeWebTitle(title.trim()) : null;
-  } catch {
-    return null;
-  }
-}
-
-function extractDouyinMediaUrl(input: string): string | null {
-  const lower = input.toLowerCase();
-  if (!lower.startsWith("http")) return null;
-  if (lower.includes(".mp4")) return input;
-  if (lower.includes("/play/") || lower.includes("/playwm/") || lower.includes("video/tos/")) {
-    return input;
-  }
-  if (lower.includes(".m3u8") || lower.includes(".mpd")) return input;
-  return null;
-}
-
-async function captureDouyinThumbnail(
+async function captureTikTokThumbnail(
   win: BrowserWindow,
   jobId: string,
   onLog: (line: string) => void
 ): Promise<string | null> {
-  const domThumbnail = await readDouyinThumbnailFromPage(win);
-  if (domThumbnail) {
-    onLog("[douyin] 已抓到頁面縮圖來源。");
-    return domThumbnail;
+  const pageThumbnail = await readTikTokThumbnailFromPage(win);
+  if (pageThumbnail) {
+    onLog("[tiktok] 已抓到頁面縮圖來源。");
+    return pageThumbnail;
   }
 
-  const bounds = await readDouyinVideoBounds(win);
+  const bounds = await readTikTokVideoBounds(win);
   if (!bounds) {
-    onLog("[douyin] 沒抓到可用的播放器範圍，略過截圖縮圖。");
+    onLog("[tiktok] 沒抓到可用的播放器範圍，略過截圖縮圖。");
     return null;
   }
 
@@ -564,15 +538,15 @@ async function captureDouyinThumbnail(
     fs.mkdirSync(thumbnailDir, { recursive: true });
     const thumbnailPath = path.join(thumbnailDir, `${jobId}.png`);
     fs.writeFileSync(thumbnailPath, image.toPNG());
-    onLog("[douyin] 已從播放器畫面截取縮圖。");
+    onLog("[tiktok] 已從播放器畫面截取縮圖。");
     return pathToFileURL(thumbnailPath).toString();
   } catch (error) {
-    onLog(`[douyin] 擷取縮圖失敗：${error instanceof Error ? error.message : String(error)}`);
+    onLog(`[tiktok] 擷取縮圖失敗：${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
 
-async function readDouyinThumbnailFromPage(win: BrowserWindow): Promise<string | null> {
+async function readTikTokThumbnailFromPage(win: BrowserWindow): Promise<string | null> {
   if (win.isDestroyed()) return null;
 
   try {
@@ -595,8 +569,7 @@ async function readDouyinThumbnailFromPage(win: BrowserWindow): Promise<string |
           document.querySelector('video')?.poster,
           document.querySelector('meta[property="og:image"]')?.getAttribute('content'),
           document.querySelector('meta[name="twitter:image"]')?.getAttribute('content'),
-          document.querySelector('img[src*="douyinpic"]')?.getAttribute('src'),
-          document.querySelector('img[src*="tos-cn-p"]')?.getAttribute('src')
+          document.querySelector('img[src*="tiktokcdn"]')?.getAttribute('src')
         ];
 
         for (const item of candidates) {
@@ -615,7 +588,7 @@ async function readDouyinThumbnailFromPage(win: BrowserWindow): Promise<string |
   }
 }
 
-async function readDouyinVideoBounds(
+async function readTikTokVideoBounds(
   win: BrowserWindow
 ): Promise<{ x: number; y: number; width: number; height: number } | null> {
   if (win.isDestroyed()) return null;
@@ -625,8 +598,8 @@ async function readDouyinVideoBounds(
       `(() => {
         const element =
           document.querySelector('video') ||
-          document.querySelector('img[src*="douyinpic"]') ||
-          document.querySelector('img[src*="tos-cn-p"]');
+          document.querySelector('img[src*="tiktokcdn"]') ||
+          document.querySelector('canvas');
         if (!element) return null;
 
         const rect = element.getBoundingClientRect();
@@ -658,9 +631,9 @@ async function readDouyinVideoBounds(
   }
 }
 
-async function readDouyinPageMedia(
+async function readTikTokPageMedia(
   win: BrowserWindow
-): Promise<{ mediaUrl: string | null; pageTitle: string | null; thumbnailUrl: string | null } | null> {
+): Promise<{ mediaUrl: string; pageTitle: string | null; thumbnailUrl: string | null } | null> {
   if (win.isDestroyed()) return null;
 
   try {
@@ -693,7 +666,7 @@ async function readDouyinPageMedia(
           video?.querySelector?.("source")?.src,
           performance.getEntriesByType("resource")
             .map((entry) => entry.name)
-            .find((name) => /\\.mp4|\\/play\\/|\\/playwm\\/|video\\/tos\\//i.test(name))
+            .find((name) => /\\.mp4|\\.m3u8|\\.mpd|video\\/tos|tiktokcdn|playwm/i.test(name))
         ]);
 
         const thumbnailUrl = findFirst([
@@ -701,8 +674,7 @@ async function readDouyinPageMedia(
           video?.getAttribute?.("poster"),
           document.querySelector('meta[property="og:image"]')?.getAttribute("content"),
           document.querySelector('meta[name="twitter:image"]')?.getAttribute("content"),
-          document.querySelector('img[src*="douyinpic"]')?.getAttribute("src"),
-          document.querySelector('img[src*="tos-cn-p"]')?.getAttribute("src")
+          document.querySelector('img[src*="tiktokcdn"]')?.getAttribute("src")
         ]);
 
         const pageTitle = document.title?.trim() || null;
@@ -713,8 +685,11 @@ async function readDouyinPageMedia(
 
     if (!result || typeof result !== "object") return null;
     return {
-      mediaUrl: isUsableDouyinMediaUrl(result.mediaUrl) ? result.mediaUrl : null,
-      pageTitle: typeof result.pageTitle === "string" && result.pageTitle.trim() ? normalizeWebTitle(result.pageTitle.trim()) : null,
+      mediaUrl: isUsableTikTokMediaUrl(result.mediaUrl) ? result.mediaUrl : null,
+      pageTitle:
+        typeof result.pageTitle === "string" && result.pageTitle.trim()
+          ? normalizeWebTitle(result.pageTitle.trim())
+          : null,
       thumbnailUrl: typeof result.thumbnailUrl === "string" ? result.thumbnailUrl : null
     };
   } catch {
@@ -722,62 +697,45 @@ async function readDouyinPageMedia(
   }
 }
 
-async function readDouyinUrlsFromPage(win: BrowserWindow): Promise<string[]> {
+async function readTikTokUrlsFromPage(win: BrowserWindow): Promise<string[]> {
   if (win.isDestroyed()) return [];
 
   try {
     const result = await win.webContents.executeJavaScript(
       `(() => {
-        const urls = new Set();
-        const normalize = (href) => {
-          try {
-            const url = new URL(href, location.href);
-            if (!url.hostname.includes("douyin.com")) return null;
-            if (/^\\/video\\/\\d+/.test(url.pathname)) return "https://www.douyin.com" + url.pathname;
-            if (/^\\/note\\/\\d+/.test(url.pathname)) return "https://www.douyin.com" + url.pathname;
-            return null;
-          } catch {
-            return null;
-          }
-        };
+        const values = new Set();
 
         for (const anchor of document.querySelectorAll("a[href]")) {
-          const normalized = normalize(anchor.href);
-          if (normalized) urls.add(normalized);
+          values.add(anchor.href);
         }
 
-        const current = normalize(location.href);
-        if (current) urls.add(current);
+        for (const item of document.querySelectorAll("[data-e2e='user-post-item'], [data-e2e='search-video-item'], [data-e2e='recommend-list-item-container']")) {
+          const link = item.querySelector("a[href]");
+          if (link?.href) {
+            values.add(link.href);
+          }
+        }
 
-        return Array.from(urls);
+        values.add(location.href);
+        return Array.from(values);
       })()`,
       true
     );
 
-    return Array.isArray(result) ? result.filter((value) => typeof value === "string") : [];
+    const rawUrls = Array.isArray(result) ? result.filter((value) => typeof value === "string") : [];
+    return extractTikTokVideoUrlsFromCandidates(rawUrls, win.webContents.getURL());
   } catch {
     return [];
   }
 }
 
-async function readDouyinEntriesFromPage(win: BrowserWindow): Promise<CollectedVideoEntry[]> {
+async function readTikTokEntriesFromPage(win: BrowserWindow): Promise<CollectedVideoEntry[]> {
   if (win.isDestroyed()) return [];
 
   try {
     const result = await win.webContents.executeJavaScript(
       `(() => {
         const entries = new Map();
-        const normalizeUrl = (href) => {
-          try {
-            const url = new URL(href, location.href);
-            if (!url.hostname.includes("douyin.com")) return null;
-            if (/^\\/video\\/\\d+/.test(url.pathname)) return "https://www.douyin.com" + url.pathname;
-            if (/^\\/note\\/\\d+/.test(url.pathname)) return "https://www.douyin.com" + url.pathname;
-            return null;
-          } catch {
-            return null;
-          }
-        };
 
         const normalizeMedia = (value) => {
           if (!value || typeof value !== "string") return null;
@@ -796,34 +754,30 @@ async function readDouyinEntriesFromPage(win: BrowserWindow): Promise<CollectedV
           return normalized || null;
         };
 
-        const titleFromRoot = (root) =>
-          cleanText(
-            root?.querySelector?.("[title]")?.getAttribute?.("title") ||
-              root?.querySelector?.("img")?.getAttribute?.("alt") ||
-              root?.innerText
-          );
-
-        const thumbnailFromRoot = (root) =>
-          normalizeMedia(
-            root?.querySelector?.("img")?.getAttribute?.("src") ||
-              root?.querySelector?.("img")?.getAttribute?.("data-src") ||
-              root?.querySelector?.("video")?.getAttribute?.("poster")
-          );
-
         const pushEntry = (href, root) => {
-          const normalizedUrl = normalizeUrl(href);
-          if (!normalizedUrl) return;
+          if (!href || typeof href !== "string") return;
 
-          const previous = entries.get(normalizedUrl) || {
-            url: normalizedUrl,
+          const previous = entries.get(href) || {
+            url: href,
             title: null,
             thumbnail: null
           };
 
-          entries.set(normalizedUrl, {
-            url: normalizedUrl,
-            title: titleFromRoot(root) || previous.title || null,
-            thumbnail: thumbnailFromRoot(root) || previous.thumbnail || null
+          entries.set(href, {
+            url: href,
+            title:
+              cleanText(
+                root?.querySelector?.("[title]")?.getAttribute?.("title") ||
+                  root?.querySelector?.("img")?.getAttribute?.("alt") ||
+                  root?.querySelector?.("h1, h2, h3")?.textContent ||
+                  root?.innerText
+              ) || previous.title || null,
+            thumbnail:
+              normalizeMedia(
+                root?.querySelector?.("img")?.getAttribute?.("src") ||
+                  root?.querySelector?.("img")?.getAttribute?.("data-src") ||
+                  root?.querySelector?.("video")?.getAttribute?.("poster")
+              ) || previous.thumbnail || null
           });
         };
 
@@ -832,42 +786,82 @@ async function readDouyinEntriesFromPage(win: BrowserWindow): Promise<CollectedV
         }
 
         pushEntry(location.href, document.body);
-
         return Array.from(entries.values());
       })()`,
       true
     );
 
-    return Array.isArray(result)
-      ? result
-          .filter((value) => value && typeof value.url === "string")
-          .map((value) => ({
-            url: value.url,
-            title:
-              typeof value.title === "string" && value.title.trim()
-                ? normalizeWebTitle(value.title.trim())
-                : null,
-            thumbnail:
-              typeof value.thumbnail === "string" && value.thumbnail.trim() ? value.thumbnail : null
-          }))
+    const rawEntries = Array.isArray(result)
+      ? result.filter((value) => value && typeof value.url === "string")
       : [];
+
+    const normalizedUrls = new Map(
+      rawEntries
+        .map((value) => String(value.url))
+        .map((url) => [url, extractTikTokVideoUrlsFromCandidates([url], win.webContents.getURL())[0] ?? null])
+    );
+
+    const normalizedEntries: CollectedVideoEntry[] = [];
+
+    for (const value of rawEntries) {
+      const url = normalizedUrls.get(String(value.url)) ?? null;
+      if (!url) continue;
+
+      normalizedEntries.push({
+        url,
+        title:
+          typeof value.title === "string" && value.title.trim()
+            ? normalizeWebTitle(value.title.trim())
+            : null,
+        thumbnail:
+          typeof value.thumbnail === "string" && value.thumbnail.trim() ? value.thumbnail : null
+      });
+    }
+
+    return normalizedEntries;
   } catch {
     return [];
   }
 }
 
-function maskQuery(url: string): string {
-  const queryIndex = url.indexOf("?");
-  return queryIndex === -1 ? url : `${url.slice(0, queryIndex)}?***`;
+function extractTikTokMediaUrl(input: string): string | null {
+  const lower = input.toLowerCase();
+  if (!lower.startsWith("http")) return null;
+  if (lower.includes(".mp4")) return input;
+  if (lower.includes(".m3u8") || lower.includes(".mpd")) return input;
+  if (lower.includes("video/tos") || lower.includes("tiktokcdn")) return input;
+  return null;
 }
 
-function isAllowedDouyinNavigation(targetUrl: string): boolean {
+function isUsableTikTokMediaUrl(input: unknown): input is string {
+  if (typeof input !== "string") return false;
+  const value = input.trim();
+  if (!value) return false;
+  if (value.startsWith("blob:")) return false;
+  return /^https?:\/\//i.test(value);
+}
+
+function safeGetTitle(win: BrowserWindow): string | null {
+  try {
+    const title = win.webContents.getTitle();
+    return title?.trim() ? normalizeWebTitle(title.trim()) : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedNavigation(targetUrl: string): boolean {
   try {
     const parsed = new URL(targetUrl);
     return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
+}
+
+function maskQuery(url: string): string {
+  const queryIndex = url.indexOf("?");
+  return queryIndex === -1 ? url : `${url.slice(0, queryIndex)}?***`;
 }
 
 function maskDangerousUrl(targetUrl: string): string {

@@ -1,9 +1,9 @@
 ﻿---
-name: ai-yd-dlp-project
-description: 用於開發 ai_yd-dlp 跨平台下載/轉檔/字幕 GUI 工具的專案技能：包含 MVP 規格、指令對照、資料夾/檔名規範、worker 進度事件設計與安全注意事項。
+name: ai-yt-dlp-project
+description: 用於開發 ai_yt-dlp 跨平台下載/轉檔/字幕 GUI 工具的專案技能：包含 MVP 規格、指令對照、資料夾/檔名規範、worker 進度事件設計與安全注意事項。
 ---
 
-# ai_yd-dlp Project Skill
+# ai_yt-dlp Project Skill
 
 ## 何時使用
 

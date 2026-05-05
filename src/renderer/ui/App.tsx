@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import type { DownloadJobRequest, JobEvent } from "../../../shared/types";
+import { shouldCollectDouyinBatch, shouldCollectTikTokBatch } from "../../../shared/platformCollection";
+import type { CollectedVideoEntry, DownloadJobRequest, JobEvent } from "../../../shared/types";
 import { normalizeInputUrl, tryParseUrl } from "../../../shared/url";
 
 type PlatformTab = "universal" | "youtube" | "douyin" | "tiktok" | "instagram" | "skool";
@@ -37,7 +38,7 @@ type ContextMenuState = {
 const timeSchema = z
   .string()
   .regex(/^\d{2}:\d{2}:\d{2}$/, "時間格式必須是 HH:MM:SS，例如 00:01:10");
-const themeStorageKey = "ai-yd-dlp-theme";
+const themeStorageKey = "ai-yt-dlp-theme";
 
 const tabs: Array<{ id: PlatformTab; label: string }> = [
   { id: "universal", label: "全平台" },
@@ -318,18 +319,21 @@ export function App() {
       return;
     }
 
+    let collectedEntries: CollectedVideoEntry[] | null = null;
+
     if (activeTab === "douyin" && urls.length === 1 && shouldCollectDouyinBatch(urls[0])) {
       setCollectorBusy(true);
       try {
-        const collected = await window.api.collectDouyinUrls({
+        const collected = await window.api.collectDouyinEntries({
           url: urls[0],
           cookiesFile: requestBase.cookiesFile
         });
-        const uniqueCollectedUrls = uniqueUrls(collected);
+        const uniqueCollectedUrls = uniqueUrls(collected.map((entry) => entry.url));
         if (uniqueCollectedUrls.length === 0) {
           window.alert("目前沒有收集到作品網址。請在抖音視窗往下滑到想要的數量，再按右下角的完成按鈕。");
           return;
         }
+        collectedEntries = dedupeCollectedEntries(collected);
         urls = uniqueCollectedUrls;
         setUrlsText(uniqueCollectedUrls.join("\n"));
       } catch (error) {
@@ -340,17 +344,46 @@ export function App() {
       }
     }
 
+    if (activeTab === "tiktok" && urls.length === 1 && shouldCollectTikTokBatch(urls[0])) {
+      setCollectorBusy(true);
+      try {
+        const collected = await window.api.collectTikTokEntries({
+          url: urls[0],
+          cookiesFile: requestBase.cookiesFile
+        });
+        const uniqueCollectedUrls = uniqueUrls(collected.map((entry) => entry.url));
+        if (uniqueCollectedUrls.length === 0) {
+          window.alert("TikTok 批次頁目前沒有收集到作品網址，請先往下滑到作品真的出現，再按完成收集。");
+          return;
+        }
+        collectedEntries = dedupeCollectedEntries(collected);
+        urls = uniqueCollectedUrls;
+        setUrlsText(uniqueCollectedUrls.join("\n"));
+      } catch (error) {
+        window.alert(`TikTok 批次收集失敗：${error instanceof Error ? error.message : String(error)}`);
+        return;
+      } finally {
+        setCollectorBusy(false);
+      }
+    }
+
+    const entrySeedMap = new Map(
+      (collectedEntries ?? []).map((entry) => [normalizeInputUrl(entry.url), entry] as const)
+    );
+
     for (const url of urls) {
       const normalizedUrl = normalizeInputUrl(url);
       const request: DownloadJobRequest = { ...requestBase, url: normalizedUrl };
       const { jobId } = await window.api.startJob(request);
+      const seed = entrySeedMap.get(normalizedUrl);
       setJobs((previous) => [
         {
           id: jobId,
           request,
           url: normalizedUrl,
-          title: simplifyUrl(normalizedUrl),
+          title: seed?.title ?? simplifyUrl(normalizedUrl),
           platform: detectPlatformFromUrl(normalizedUrl),
+          thumbnail: seed?.thumbnail ?? undefined,
           status: "queued",
           percent: 0,
           logs: []
@@ -1330,11 +1363,22 @@ function uniqueUrls(urls: string[]): string[] {
   return [...new Set(urls.map((item) => normalizeInputUrl(item)).filter(Boolean))];
 }
 
-function shouldCollectDouyinBatch(url: string): boolean {
-  const parsed = tryParseUrl(url);
-  if (!parsed) return false;
-  if (!parsed.hostname.includes("douyin.com")) return false;
-  return !/^\/video\/\d+/.test(parsed.pathname) && !/^\/note\/\d+/.test(parsed.pathname);
+function dedupeCollectedEntries(entries: CollectedVideoEntry[]): CollectedVideoEntry[] {
+  const uniqueEntries = new Map<string, CollectedVideoEntry>();
+
+  for (const entry of entries) {
+    const normalizedUrl = normalizeInputUrl(entry.url);
+    if (!normalizedUrl) continue;
+
+    const previous = uniqueEntries.get(normalizedUrl);
+    uniqueEntries.set(normalizedUrl, {
+      url: normalizedUrl,
+      title: entry.title ?? previous?.title ?? null,
+      thumbnail: entry.thumbnail ?? previous?.thumbnail ?? null
+    });
+  }
+
+  return [...uniqueEntries.values()];
 }
 
 function getUrlsPlaceholder(tab: PlatformTab): string {

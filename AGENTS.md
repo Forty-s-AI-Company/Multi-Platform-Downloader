@@ -1,4 +1,4 @@
-﻿## Codex / AI Agent 指南（ai_yd-dlp）
+﻿## Codex / AI Agent 指南（ai_yt-dlp）
 
 > 這份是「給 AI 用的專案工作手冊」，目標是：之後你叫 Codex 做事，它能穩、快、少走冤枉路。
 

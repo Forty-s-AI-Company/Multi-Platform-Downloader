@@ -1,4 +1,4 @@
-<#
+﻿<#
 Install repo-bundled Codex skills into the user's CODEX_HOME (Windows).
 
 - Copies `.codex/skills/*` into `$CODEX_HOME/skills/*`
@@ -54,5 +54,5 @@ Get-ChildItem -Path $sourceRoot -Directory | ForEach-Object {
 
 Write-Host ""
 Write-Host "Done. Installed skills:"
-Write-Host " - ai-yd-dlp-project"
-Write-Host " - ai-yd-dlp-platform-integration"
+Write-Host " - ai-yt-dlp-project"
+Write-Host " - ai-yt-dlp-platform-integration"

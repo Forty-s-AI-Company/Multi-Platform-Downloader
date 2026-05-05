@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 function Merge-Directory {
   param(
@@ -25,17 +25,20 @@ function Merge-Directory {
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
-Get-Process ai_yd-dlp, electron -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process ai_yd-dlp, ai_yt-dlp, electron -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
 $releaseRoot = Join-Path $projectRoot "release"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $stagingRoot = Join-Path $releaseRoot ".build-$timestamp"
-$latestInstaller = Join-Path $releaseRoot "ai_yd-dlp Setup 0.0.1.exe"
-$latestBlockMap = Join-Path $releaseRoot "ai_yd-dlp Setup 0.0.1.exe.blockmap"
+$latestInstaller = Join-Path $releaseRoot "ai_yt-dlp Setup 0.0.1.exe"
+$latestBlockMap = Join-Path $releaseRoot "ai_yt-dlp Setup 0.0.1.exe.blockmap"
 $latestUnpacked = Join-Path $releaseRoot "win-unpacked"
 $latestManifest = Join-Path $releaseRoot "LATEST.txt"
 $builderDebugFile = Join-Path $releaseRoot "builder-debug.yml"
+$legacyInstaller = Join-Path $releaseRoot "ai_yd-dlp Setup 0.0.1.exe"
+$legacyBlockMap = Join-Path $releaseRoot "ai_yd-dlp Setup 0.0.1.exe.blockmap"
+$legacyZip = Join-Path $releaseRoot "ai_yd-dlp-win-unpacked.zip"
 
 New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
 
@@ -52,8 +55,8 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
-$stagedInstaller = Join-Path $stagingRoot "ai_yd-dlp Setup 0.0.1.exe"
-$stagedBlockMap = Join-Path $stagingRoot "ai_yd-dlp Setup 0.0.1.exe.blockmap"
+$stagedInstaller = Join-Path $stagingRoot "ai_yt-dlp Setup 0.0.1.exe"
+$stagedBlockMap = Join-Path $stagingRoot "ai_yt-dlp Setup 0.0.1.exe.blockmap"
 $stagedUnpacked = Join-Path $stagingRoot "win-unpacked"
 
 if (Test-Path $latestInstaller) {
@@ -62,6 +65,15 @@ if (Test-Path $latestInstaller) {
 if (Test-Path $latestBlockMap) {
   Remove-Item -LiteralPath $latestBlockMap -Force
 }
+if (Test-Path $legacyInstaller) {
+  Remove-Item -LiteralPath $legacyInstaller -Force
+}
+if (Test-Path $legacyBlockMap) {
+  Remove-Item -LiteralPath $legacyBlockMap -Force
+}
+if (Test-Path $legacyZip) {
+  Remove-Item -LiteralPath $legacyZip -Force
+}
 
 Get-ChildItem -Path $releaseRoot -Directory -Filter "win-unpacked*" -ErrorAction SilentlyContinue |
   Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -69,20 +81,7 @@ Get-ChildItem -Path $releaseRoot -Directory -Filter "win-unpacked*" -ErrorAction
 Copy-Item -LiteralPath $stagedInstaller -Destination $latestInstaller -Force
 Copy-Item -LiteralPath $stagedBlockMap -Destination $latestBlockMap -Force
 
-if (Test-Path $latestUnpacked) {
-  Merge-Directory -Source $stagedUnpacked -Destination $latestUnpacked
-  if (Test-Path $stagedUnpacked) {
-    Remove-Item -LiteralPath $stagedUnpacked -Recurse -Force -ErrorAction SilentlyContinue
-  }
-} else {
-  Move-Item -LiteralPath $stagedUnpacked -Destination $latestUnpacked -Force
-}
-
-$nestedUnpacked = Join-Path $latestUnpacked "win-unpacked"
-if (Test-Path $nestedUnpacked) {
-  Merge-Directory -Source $nestedUnpacked -Destination $latestUnpacked
-  Remove-Item -LiteralPath $nestedUnpacked -Recurse -Force -ErrorAction SilentlyContinue
-}
+Move-Item -LiteralPath $stagedUnpacked -Destination $latestUnpacked -Force
 
 @(
   "Installer=$latestInstaller"

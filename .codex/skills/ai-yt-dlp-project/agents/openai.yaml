@@ -1,0 +1,5 @@
+﻿display_name: ai_yt-dlp Project
+short_description: 開發跨平台 yt-dlp GUI 的專案流程與規格
+default_prompt: |
+  你在 ai_yt-dlp 專案中協助我實作跨平台 GUI：貼網址下載影片/音訊/字幕，支援畫質/音質選擇、播放清單、區間下載與 cookies。請先依照 AGENTS.md 與 docs/PRD.md 的 MVP 範圍行事，並把 yt-dlp/ffmpeg 的指令封裝成安全可維護的 worker（避免 shell injection、避免記錄 cookies）。
+
